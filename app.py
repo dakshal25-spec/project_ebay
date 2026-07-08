@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from search_items import search_items, get_usd_to_inr_rate, get_item_details, format_time_left, get_access_token
-
+import os
 app = Flask(__name__)
 CORS(app)  # allows your website (different origin) to call this API
 
@@ -47,4 +47,5 @@ def get_deals():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
