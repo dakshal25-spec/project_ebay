@@ -2,3 +2,10 @@ flask
 flask-cors
 requests
 python-dotenv
+flask-sqlalchemy
+flask-bcrypt
+flask-jwt-extended
+cryptography
+apscheduler
+flask-limiter
+flask-migrate

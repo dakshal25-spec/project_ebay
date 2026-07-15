@@ -1,5 +1,7 @@
 import requests
 import base64
+import time
+import threading
 from datetime import datetime, timezone
 import os
 from dotenv import load_dotenv
@@ -11,22 +13,57 @@ ENV = os.getenv("EBAY_ENV")
 
 base_url = "https://api.sandbox.ebay.com" if ENV == "sandbox" else "https://api.ebay.com"
 
-credentials = f"{CLIENT_ID}:{CLIENT_SECRET}"
-encoded_credentials = base64.b64encode(credentials.encode()).decode()
+REQUEST_TIMEOUT = 15  # seconds, applied to every outbound HTTP call in this module
+
+# --- Token cache -------------------------------------------------------
+# eBay client-credentials tokens are valid ~7200s. Without caching, every
+# search/detail call re-authenticates, which is slow and burns rate limit.
+_token_lock = threading.Lock()
+_cached_token = None
+_token_expires_at = 0  # epoch seconds
 
 
-def get_access_token():
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": f"Basic {encoded_credentials}"
-    }
-    data = {
-        "grant_type": "client_credentials",
-        "scope": "https://api.ebay.com/oauth/api_scope"
-    }
-    response = requests.post(f"{base_url}/identity/v1/oauth2/token", headers=headers, data=data)
-    response.raise_for_status()
-    return response.json()["access_token"]
+def _get_encoded_credentials():
+    if not CLIENT_ID or not CLIENT_SECRET:
+        raise RuntimeError(
+            "EBAY_CLIENT_ID and EBAY_CLIENT_SECRET must be set in .env"
+        )
+    credentials = f"{CLIENT_ID}:{CLIENT_SECRET}"
+    return base64.b64encode(credentials.encode()).decode()
+
+
+def get_access_token(force_refresh=False):
+    """Returns a cached eBay OAuth token, refreshing it only when expired
+    (or when force_refresh=True). Thread-safe so the background scheduler
+    and Flask request threads don't race each other."""
+    global _cached_token, _token_expires_at
+
+    with _token_lock:
+        if not force_refresh and _cached_token and time.time() < _token_expires_at:
+            return _cached_token
+
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {_get_encoded_credentials()}"
+        }
+        data = {
+            "grant_type": "client_credentials",
+            "scope": "https://api.ebay.com/oauth/api_scope"
+        }
+        response = requests.post(
+            f"{base_url}/identity/v1/oauth2/token",
+            headers=headers,
+            data=data,
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+        payload = response.json()
+
+        _cached_token = payload["access_token"]
+        # Refresh a bit early (60s buffer) to avoid using a token that expires
+        # mid-request.
+        _token_expires_at = time.time() + payload.get("expires_in", 7200) - 60
+        return _cached_token
 
 
 def search_items(keyword, limit=10):
@@ -43,15 +80,26 @@ def search_items(keyword, limit=10):
     response = requests.get(
         f"{base_url}/buy/browse/v1/item_summary/search",
         headers=headers,
-        params=params
+        params=params,
+        timeout=REQUEST_TIMEOUT,
     )
+    if response.status_code == 401:
+        # Token may have been invalidated server-side; force one retry with a fresh token.
+        token = get_access_token(force_refresh=True)
+        headers["Authorization"] = f"Bearer {token}"
+        response = requests.get(
+            f"{base_url}/buy/browse/v1/item_summary/search",
+            headers=headers,
+            params=params,
+            timeout=REQUEST_TIMEOUT,
+        )
     response.raise_for_status()
     return response.json()
 
 
 def get_usd_to_inr_rate():
     try:
-        response = requests.get("https://open.er-api.com/v6/latest/USD")
+        response = requests.get("https://open.er-api.com/v6/latest/USD", timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         data = response.json()
         return data["rates"]["INR"]
@@ -65,7 +113,11 @@ def get_item_details(item_id, token):
         "Authorization": f"Bearer {token}",
         "X-EBAY-C-MARKETPLACE-ID": "EBAY_US"
     }
-    response = requests.get(f"{base_url}/buy/browse/v1/item/{item_id}", headers=headers)
+    response = requests.get(
+        f"{base_url}/buy/browse/v1/item/{item_id}",
+        headers=headers,
+        timeout=REQUEST_TIMEOUT,
+    )
     response.raise_for_status()
     return response.json()
 
