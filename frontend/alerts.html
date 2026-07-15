@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS Alerts & Preferences — AuctionDealFinder</title>
+<meta name="description" content="Manage your phone number, SMS consent, and saved auction alert filters.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===================================================================
+   AuctionDealFinder — shared design system
+   Dark, high-contrast, modern SaaS aesthetic.
+   =================================================================== */
+
+:root{
+  /* --- Surfaces --- */
+  --bg:            #0A0B0D;
+  --bg-raised:      #131519;
+  --bg-elevated:    #1B1E24;
+  --bg-elevated-2:  #23262D;
+
+  /* --- Borders --- */
+  --border:         #24272E;
+  --border-strong:  #383D46;
+
+  /* --- Text --- */
+  --text:           #F3F4F6;
+  --text-dim:       #9CA3AF;
+  --text-faint:     #62676F;
+
+  /* --- Brand accent (gold — the "deal" color) --- */
+  --gold:           #E3B341;
+  --gold-bright:    #F4CA5E;
+  --gold-dim:       rgba(227,179,65,0.14);
+
+  /* --- Live / positive accent --- */
+  --live:           #34D399;
+  --live-dim:       rgba(52,211,153,0.14);
+
+  /* --- Danger --- */
+  --danger:         #F0685C;
+  --danger-dim:     rgba(240,104,92,0.14);
+
+  /* --- Info link --- */
+  --link:           #7AA9F7;
+
+  /* --- Type --- */
+  --display: 'Space Grotesk', sans-serif;
+  --body:    'Inter', sans-serif;
+  --mono:    'IBM Plex Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit; text-decoration:none;}
+img{max-width:100%; display:block;}
+ul{list-style:none;}
+
+::selection{background:var(--gold-dim); color:var(--gold-bright);}
+
+:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
+
+.wrap{max-width:1180px; margin:0 auto; padding-left:32px; padding-right:32px;}
+
+/* =================== NAV =================== */
+nav.site-nav{
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 32px;
+  height:68px;
+  background:rgba(10,11,13,0.86);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.brand{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:1.05rem;
+  letter-spacing:-0.01em;
+  display:flex; align-items:center; gap:9px;
+  color:var(--text);
+}
+.brand .mark{
+  width:9px; height:9px; border-radius:2px;
+  background:var(--gold);
+  transform:rotate(45deg);
+  box-shadow:0 0 12px rgba(227,179,65,0.5);
+  flex-shrink:0;
+}
+.nav-links{display:flex; gap:30px; font-size:0.88rem;}
+.nav-links a{
+  color:var(--text-dim);
+  transition:color .15s ease;
+  position:relative;
+}
+.nav-links a:hover, .nav-links a.active{color:var(--text);}
+.nav-links a.active::after{
+  content:""; position:absolute; left:0; right:0; bottom:-23px;
+  height:2px; background:var(--gold);
+}
+.nav-right{display:flex; align-items:center; gap:20px;}
+.nav-toggle{display:none; background:none; border:none; color:var(--text); font-size:1.4rem; cursor:pointer;}
+
+@media (max-width:860px){
+  .nav-links{
+    position:fixed; top:68px; left:0; right:0; z-index:99;
+    background:var(--bg-raised); border-bottom:1px solid var(--border);
+    flex-direction:column; gap:0; padding:8px 0;
+    display:none;
+  }
+  .nav-links.open{display:flex;}
+  .nav-links a{padding:14px 28px; width:100%; display:block; border-bottom:1px solid var(--border);}
+  .nav-links a.active::after{display:none;}
+  .nav-toggle{display:block;}
+}
+
+/* Account widget (nav-right) */
+.account-widget{display:flex; align-items:center; gap:12px; font-size:0.85rem;}
+.btn{
+  font-family:var(--body);
+  font-size:0.85rem;
+  font-weight:600;
+  border-radius:var(--radius-sm);
+  padding:9px 16px;
+  cursor:pointer;
+  border:1px solid var(--border-strong);
+  background:transparent;
+  color:var(--text);
+  transition:border-color .15s ease, background .15s ease, transform .1s ease, color .15s ease;
+  display:inline-flex; align-items:center; gap:8px;
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--text-dim);}
+.btn-gold{
+  background:var(--gold); border-color:var(--gold); color:#181203;
+}
+.btn-gold:hover{background:var(--gold-bright); border-color:var(--gold-bright); transform:translateY(-1px);}
+.btn-lg{padding:14px 26px; font-size:0.92rem;}
+.btn-block{width:100%; justify-content:center;}
+.acct-email{color:var(--text-dim); font-family:var(--mono); font-size:0.8rem;}
+@media (max-width:520px){ .acct-email{display:none;} }
+
+/* =================== TICKER (signature element) =================== */
+.ticker{
+  background:var(--bg-raised);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+  white-space:nowrap;
+  padding:9px 0;
+  position:relative;
+}
+.ticker::before, .ticker::after{
+  content:""; position:absolute; top:0; bottom:0; width:80px; z-index:2; pointer-events:none;
+}
+.ticker::before{left:0; background:linear-gradient(90deg, var(--bg-raised), transparent);}
+.ticker::after{right:0; background:linear-gradient(270deg, var(--bg-raised), transparent);}
+.ticker-track{
+  display:inline-flex; gap:0;
+  animation:ticker-scroll 38s linear infinite;
+}
+.ticker-track span{
+  font-family:var(--mono);
+  font-size:0.78rem;
+  color:var(--text-dim);
+  padding:0 28px;
+  border-right:1px solid var(--border);
+  display:inline-flex; align-items:center; gap:8px;
+}
+.ticker-track span.up{color:var(--live);}
+.ticker-track span.down{color:var(--gold);}
+.ticker-track span .dot{width:5px; height:5px; border-radius:50%; background:currentColor;}
+@keyframes ticker-scroll{
+  from{transform:translateX(0);}
+  to{transform:translateX(-50%);}
+}
+@media (prefers-reduced-motion: reduce){
+  .ticker-track{animation:none;}
+}
+
+/* =================== HERO =================== */
+.hero{padding:96px 32px 84px; position:relative; overflow:hidden;}
+.hero::before{
+  content:"";
+  position:absolute; top:-200px; right:-160px;
+  width:560px; height:560px; border-radius:50%;
+  background:radial-gradient(circle, rgba(227,179,65,0.10), transparent 70%);
+  pointer-events:none;
+}
+.hero-inner{max-width:760px; margin:0 auto; text-align:center; position:relative;}
+.eyebrow{
+  font-family:var(--mono); font-size:0.76rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--gold);
+  display:inline-flex; align-items:center; gap:9px;
+  padding:7px 14px;
+  border:1px solid rgba(227,179,65,0.3);
+  border-radius:999px;
+  background:var(--gold-dim);
+  margin-bottom:28px;
+}
+.eyebrow .live-dot{width:6px; height:6px; border-radius:50%; background:var(--live); animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.25;}}
+h1{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:clamp(2.3rem, 5vw, 3.6rem);
+  line-height:1.08;
+  letter-spacing:-0.02em;
+}
+h1 .accent{color:var(--gold);}
+.hero-sub{
+  margin:26px auto 0; max-width:540px;
+  font-size:1.05rem; color:var(--text-dim);
+}
+.hero-actions{margin-top:38px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+
+.hero-stats{
+  margin-top:72px; display:flex; justify-content:center; gap:0;
+  border-top:1px solid var(--border); padding-top:28px; flex-wrap:wrap;
+}
+.stat{padding:0 40px; border-right:1px solid var(--border); text-align:left;}
+.stat:last-child{border-right:none;}
+.stat-num{font-family:var(--mono); font-size:1.5rem; font-weight:600; color:var(--gold);}
+.stat-label{font-size:0.78rem; color:var(--text-faint); margin-top:4px;}
+
+/* =================== SECTION SCAFFOLDING =================== */
+section.block{padding:88px 32px;}
+.section-head{
+  font-family:var(--mono); font-size:0.76rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--live); margin-bottom:12px;
+}
+.section-title{
+  font-family:var(--display); font-size:1.9rem; font-weight:600; letter-spacing:-0.01em;
+  margin-bottom:14px; max-width:600px;
+}
+.section-desc{color:var(--text-dim); max-width:560px; margin-bottom:48px;}
+
+/* How it works */
+.how-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden;}
+.how-item{background:var(--bg-raised); padding:32px 28px;}
+.how-tag{font-family:var(--mono); font-size:0.8rem; color:var(--gold); margin-bottom:14px;}
+.how-item h3{font-family:var(--display); font-size:1.15rem; font-weight:600; margin-bottom:10px;}
+.how-item p{font-size:0.92rem; color:var(--text-dim);}
+@media (max-width:760px){ .how-grid{grid-template-columns:1fr;} }
+
+/* =================== DASHBOARD / LOTS =================== */
+.dashboard{background:var(--bg-raised); border-top:1px solid var(--border); border-bottom:1px solid var(--border);}
+.search-bar{display:flex; gap:10px; margin:32px 0 40px; max-width:520px; flex-wrap:wrap;}
+.search-bar input{
+  flex:1; min-width:220px; background:var(--bg-elevated); border:1px solid var(--border-strong);
+  color:var(--text); font-family:var(--body); font-size:0.95rem; padding:13px 16px; border-radius:var(--radius-sm);
+}
+.search-bar input::placeholder{color:var(--text-faint);}
+.search-bar input:focus{outline:2px solid var(--gold); border-color:transparent;}
+.search-bar button{
+  font-family:var(--body); font-weight:600; background:var(--gold); color:#181203; border:none;
+  padding:0 24px; cursor:pointer; font-size:0.88rem; border-radius:var(--radius-sm);
+}
+.search-bar button:hover{background:var(--gold-bright);}
+.status-line{font-family:var(--mono); font-size:0.8rem; color:var(--text-faint); margin-bottom:28px; min-height:1.2em;}
+
+.lots{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px;}
+.lot-card{
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:22px; display:flex; flex-direction:column; gap:13px;
+  transition:border-color .15s ease, transform .15s ease;
+}
+.lot-card:hover{border-color:var(--border-strong); transform:translateY(-2px);}
+.lot-top{display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.74rem; color:var(--text-faint);}
+.lot-thumb{width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:var(--radius-sm); background:var(--bg-elevated-2);}
+.lot-title{font-family:var(--display); font-size:1rem; font-weight:600; line-height:1.32; color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.lot-price-row{display:flex; justify-content:space-between; align-items:baseline; border-top:1px dashed var(--border); padding-top:13px;}
+.lot-price-usd{font-family:var(--mono); font-size:1.2rem; font-weight:600; color:var(--text);}
+.lot-price-inr{font-family:var(--mono); font-size:0.78rem; color:var(--text-faint);}
+.lot-meta{display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.76rem;}
+.lot-time{color:var(--live); display:flex; align-items:center; gap:6px;}
+.lot-time.closing{color:var(--danger);}
+.lot-time .dot{width:5px; height:5px; border-radius:50%; background:currentColor;}
+.lot-bids{color:var(--text-faint);}
+.lot-link{
+  margin-top:2px; text-align:center; font-family:var(--body); font-weight:600; font-size:0.82rem;
+  color:#181203; background:var(--gold); padding:11px; border-radius:var(--radius-sm); transition:background .15s;
+}
+.lot-link:hover{background:var(--gold-bright);}
+.empty-state{grid-column:1/-1; padding:60px 20px; text-align:center; font-family:var(--mono); font-size:0.9rem; color:var(--text-faint);}
+
+/* =================== FOOTER =================== */
+footer.site-footer{
+  border-top:1px solid var(--border);
+  padding:56px 32px 32px;
+  background:var(--bg);
+}
+.footer-grid{
+  max-width:1180px; margin:0 auto;
+  display:grid; grid-template-columns:1.4fr repeat(4, 1fr); gap:32px;
+}
+.footer-brand .brand{margin-bottom:14px;}
+.footer-brand p{color:var(--text-faint); font-size:0.85rem; max-width:260px;}
+.footer-col h4{font-family:var(--mono); font-size:0.74rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint); margin-bottom:16px;}
+.footer-col ul{display:flex; flex-direction:column; gap:11px;}
+.footer-col a{color:var(--text-dim); font-size:0.88rem; transition:color .15s;}
+.footer-col a:hover{color:var(--text);}
+.footer-bottom{
+  max-width:1180px; margin:44px auto 0; padding-top:24px; border-top:1px solid var(--border);
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  font-family:var(--mono); font-size:0.76rem; color:var(--text-faint);
+}
+@media (max-width:900px){ .footer-grid{grid-template-columns:1fr 1fr;} }
+@media (max-width:520px){ .footer-grid{grid-template-columns:1fr;} }
+
+/* =================== AUTH DRAWER =================== */
+.auth-overlay{
+  position:fixed; inset:0; background:rgba(3,4,5,0.7);
+  display:none; align-items:stretch; justify-content:flex-end; z-index:300;
+}
+.auth-overlay.open{display:flex;}
+.auth-panel{
+  width:min(420px,100%); background:var(--bg-raised); color:var(--text);
+  padding:36px 32px; overflow-y:auto; border-left:1px solid var(--border);
+  animation:slideIn .22s ease;
+}
+@keyframes slideIn{from{transform:translateX(20px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+.auth-panel-head{display:flex; justify-content:space-between; align-items:flex-start;}
+.auth-close{background:none; border:none; color:var(--text-dim); font-size:1.5rem; cursor:pointer; line-height:1;}
+.auth-close:hover{color:var(--text);}
+.auth-panel h2{font-family:var(--display); font-size:1.5rem; font-weight:600; margin-top:18px;}
+.auth-tabs{display:flex; gap:0; margin:26px 0 30px; border-bottom:1px solid var(--border);}
+.auth-tab{
+  font-family:var(--mono); font-size:0.84rem; background:none; border:none; color:var(--text-faint);
+  padding:0 0 13px; margin-right:26px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+}
+.auth-tab.active{color:var(--gold); border-bottom-color:var(--gold);}
+
+.field{margin-bottom:18px;}
+.field label{
+  display:block; font-family:var(--mono); font-size:0.7rem; letter-spacing:0.07em; text-transform:uppercase;
+  color:var(--text-faint); margin-bottom:8px;
+}
+.field input, .field select, .field textarea{
+  width:100%; background:var(--bg-elevated); border:1px solid var(--border-strong); color:var(--text);
+  font-family:var(--body); font-size:0.94rem; padding:12px 14px; border-radius:var(--radius-sm);
+}
+.field input::placeholder, .field textarea::placeholder{color:var(--text-faint);}
+.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--gold); border-color:transparent;}
+.field-hint{font-size:0.78rem; color:var(--text-faint); margin-top:6px;}
+.field-checkbox{display:flex; align-items:flex-start; gap:10px; font-size:0.83rem; color:var(--text-dim); line-height:1.45;}
+.field-checkbox input{width:auto; margin-top:3px; accent-color:var(--gold);}
+.field-checkbox a{color:var(--link); text-decoration:underline; text-underline-offset:2px;}
+
+.form-submit{
+  width:100%; font-family:var(--body); font-size:0.9rem; font-weight:600;
+  background:var(--gold); color:#181203; border:none; padding:14px; cursor:pointer;
+  margin-top:6px; border-radius:var(--radius-sm);
+}
+.form-submit:hover{background:var(--gold-bright);}
+.form-submit:disabled{opacity:0.45; cursor:not-allowed;}
+.form-msg{font-family:var(--mono); font-size:0.8rem; margin-top:14px; padding:11px 13px; display:none; border-radius:var(--radius-sm);}
+.form-msg.show{display:block;}
+.form-msg.error{background:var(--danger-dim); color:#f3a49d; border-left:2px solid var(--danger);}
+.form-msg.success{background:var(--live-dim); color:#8fe9c8; border-left:2px solid var(--live);}
+
+/* =================== GENERIC CONTENT PAGE (About/FAQ/Privacy/Terms) =================== */
+.page-header{padding:88px 32px 56px; border-bottom:1px solid var(--border);}
+.page-header-inner{max-width:760px; margin:0 auto;}
+.page-header .eyebrow{margin-bottom:22px;}
+.page-header h1{font-size:clamp(2rem, 4.4vw, 2.9rem); max-width:640px;}
+.page-header p{color:var(--text-dim); margin-top:18px; max-width:560px; font-size:1.02rem;}
+
+.content{padding:64px 32px 100px;}
+.content-inner{max-width:760px; margin:0 auto;}
+.content-inner h2{font-family:var(--display); font-size:1.4rem; font-weight:600; margin:44px 0 16px;}
+.content-inner h2:first-child{margin-top:0;}
+.content-inner p{color:var(--text-dim); margin-bottom:16px;}
+.content-inner ul, .content-inner ol{margin:0 0 16px 22px; color:var(--text-dim);}
+.content-inner ul{list-style:disc;}
+.content-inner ol{list-style:decimal;}
+.content-inner li{margin-bottom:8px;}
+.content-inner strong{color:var(--text);}
+.content-inner a{color:var(--link); text-decoration:underline; text-underline-offset:2px;}
+.updated-note{font-family:var(--mono); font-size:0.8rem; color:var(--text-faint); margin-bottom:8px;}
+
+/* Cards used on About / FAQ */
+.card-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin:32px 0;}
+.info-card{background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md); padding:26px;}
+.info-card h3{font-family:var(--display); font-size:1.05rem; margin-bottom:10px;}
+.info-card p{color:var(--text-dim); font-size:0.92rem; margin:0;}
+@media (max-width:640px){ .card-grid{grid-template-columns:1fr;} }
+
+/* FAQ accordion */
+.faq-list{display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; margin-top:8px;}
+.faq-item{background:var(--bg-elevated);}
+.faq-q{
+  width:100%; text-align:left; background:none; border:none; color:var(--text); cursor:pointer;
+  padding:22px 24px; font-family:var(--display); font-size:1rem; font-weight:600;
+  display:flex; justify-content:space-between; align-items:center; gap:16px;
+}
+.faq-q .icon{color:var(--gold); font-family:var(--mono); font-size:1.1rem; transition:transform .2s ease; flex-shrink:0;}
+.faq-item.open .faq-q .icon{transform:rotate(45deg);}
+.faq-a{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.faq-a-inner{padding:0 24px 22px; color:var(--text-dim); font-size:0.92rem; max-width:640px;}
+.faq-item.open .faq-a{max-height:400px;}
+
+/* =================== ALERTS / PREFERENCES PAGE =================== */
+.signed-out-card{
+  border:1px dashed var(--border-strong); border-radius:var(--radius-md);
+  padding:56px 40px; text-align:center;
+}
+.signed-out-card p{max-width:440px; margin:12px auto 24px; color:var(--text-dim);}
+
+.consent-card{
+  border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:28px; margin-bottom:40px; background:var(--bg-elevated);
+}
+.consent-card .field{max-width:340px;}
+.consent-status{display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:0.8rem; color:var(--live); margin-bottom:6px;}
+.consent-status .dot{width:7px; height:7px; border-radius:50%; background:var(--live);}
+.consent-status.off{color:var(--gold);}
+.consent-status.off .dot{background:var(--gold);}
+
+.privacy-note{
+  display:flex; gap:12px; align-items:flex-start;
+  background:var(--live-dim); border:1px solid rgba(52,211,153,0.3); border-radius:var(--radius-md);
+  padding:16px 18px; margin-bottom:32px; font-size:0.88rem; color:#a8ecd2;
+}
+.privacy-note .ic{font-size:1.1rem; line-height:1;}
+
+.filters-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:22px;}
+.filters-head .section-title{margin-bottom:0;}
+.filters-limit{font-family:var(--mono); font-size:0.78rem; color:var(--text-faint);}
+
+.filter-list{display:flex; flex-direction:column; gap:12px; margin-bottom:32px;}
+.filter-card{
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:20px 22px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+}
+.filter-card.inactive{opacity:0.5;}
+.filter-info{flex:1; min-width:220px;}
+.filter-name{font-family:var(--display); font-size:1.02rem; font-weight:600; margin-bottom:6px;}
+.filter-crit{font-family:var(--mono); font-size:0.76rem; color:var(--text-faint); display:flex; gap:14px; flex-wrap:wrap;}
+.filter-actions{display:flex; gap:10px; align-items:center;}
+.filter-actions button{
+  font-family:var(--mono); font-size:0.75rem; background:none; cursor:pointer; border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong); padding:8px 14px; color:var(--text);
+}
+.filter-actions button:hover{border-color:var(--text-dim);}
+.filter-actions button.danger:hover{border-color:var(--danger); color:var(--danger);}
+
+.toggle-switch{position:relative; width:38px; height:20px; flex-shrink:0;}
+.toggle-switch input{opacity:0; width:0; height:0; position:absolute;}
+.toggle-slider{position:absolute; inset:0; background:var(--border-strong); cursor:pointer; transition:background .15s; border-radius:999px;}
+.toggle-slider::before{content:""; position:absolute; width:14px; height:14px; left:3px; top:3px; background:var(--text); border-radius:50%; transition:transform .15s;}
+.toggle-switch input:checked + .toggle-slider{background:var(--live);}
+.toggle-switch input:checked + .toggle-slider::before{transform:translateX(18px); background:#0A0B0D;}
+
+.new-filter-card{border:1px dashed var(--border-strong); border-radius:var(--radius-md); padding:28px;}
+.new-filter-card .section-head{margin-bottom:20px;}
+.filter-form-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:0 24px;}
+.filter-form-grid .field.full{grid-column:1/-1;}
+.filter-form-grid .form-submit{grid-column:1/-1; width:auto; justify-self:start; padding:13px 28px;}
+
+.alerts-empty{
+  text-align:center; padding:40px 20px; font-family:var(--mono); font-size:0.85rem; color:var(--text-faint);
+  border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:32px;
+}
+
+@media (max-width:760px){
+  .filter-form-grid{grid-template-columns:1fr;}
+  .filter-card{flex-direction:column; align-items:flex-start;}
+  .auth-panel{padding:30px 22px;}
+}
+
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="index.html" class="brand"><span class="mark"></span>AuctionDealFinder</a>
+  <div class="nav-links" id="navLinks">
+    <a href="index.html#how">How it works</a>
+    <a href="index.html#dashboard">Live lots</a>
+    <a href="alerts.html" class="active">My alerts</a>
+    <a href="about.html">About</a>
+    <a href="faq.html">FAQ</a>
+  </div>
+  <div class="nav-right">
+    <div class="account-widget" id="accountWidget"></div>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="eyebrow"><span class="live-dot"></span>SMS ALERTS</div>
+    <h1>Your alerts &amp; preferences</h1>
+    <p>Add a phone number, control your SMS consent, and manage the alert filters that decide which auction deals get texted to you.</p>
+  </div>
+</div>
+
+<section class="content">
+  <div class="content-inner">
+
+    <div class="privacy-note">
+      <span class="ic">🔒</span>
+      <div>Your phone number is encrypted at rest and used <strong>only</strong> to send the alerts you opt into below. It's never shared, sold, or used for anything else. You can remove it or withdraw consent at any time.</div>
+    </div>
+
+    <!-- Signed out -->
+    <div class="signed-out-card" id="signedOutCard">
+      <div class="section-head" style="justify-content:center; display:flex;">Members only</div>
+      <p>Sign in to save alert filters and get a text the moment a matching auction sits under fair value.</p>
+      <button class="btn btn-gold btn-lg" id="signedOutCta">Sign in or create an account →</button>
+    </div>
+
+    <!-- Signed in -->
+    <div id="signedInArea" style="display:none;">
+
+      <div class="consent-card" id="consentCard">
+        <div class="section-head">Notification settings</div>
+        <div id="consentStatus"></div>
+        <form id="phoneForm" style="margin-top:16px;">
+          <div class="field">
+            <label for="phoneInput">Phone number (E.164 format)</label>
+            <input type="text" id="phoneInput" placeholder="+919876543210">
+            <div class="field-hint">Include the country code, e.g. +91 for India.</div>
+          </div>
+          <label class="field-checkbox">
+            <input type="checkbox" id="smsConsentCheck">
+            <span>I agree to receive SMS alerts about matching auction deals at this number.</span>
+          </label>
+          <button type="submit" class="form-submit" style="width:auto; padding:12px 24px; margin-top:16px;">Save number</button>
+          <div class="form-msg" id="phoneMsg"></div>
+        </form>
+      </div>
+
+      <div class="filters-head">
+        <div class="section-title" style="font-size:1.4rem;">Your alert filters</div>
+        <div class="filters-limit" id="filtersLimit"></div>
+      </div>
+
+      <div class="filter-list" id="filterList"></div>
+      <div class="alerts-empty" id="filtersEmpty" style="display:none;">No alert filters yet — create one below to start getting notified.</div>
+
+      <div class="new-filter-card">
+        <div class="section-head">New filter</div>
+        <form id="newFilterForm" class="filter-form-grid">
+          <div class="field">
+            <label for="fName">Filter name</label>
+            <input type="text" id="fName" placeholder="e.g. Vintage cameras under ₹5k">
+          </div>
+          <div class="field">
+            <label for="fKeywords">Keywords (comma-separated)</label>
+            <input type="text" id="fKeywords" placeholder="vintage camera, film camera">
+          </div>
+          <div class="field">
+            <label for="fMaxPrice">Max price (₹)</label>
+            <input type="number" id="fMaxPrice" placeholder="5000" min="0">
+          </div>
+          <div class="field">
+            <label for="fMinDiscount">Min discount (%)</label>
+            <input type="number" id="fMinDiscount" placeholder="20" min="0" max="100">
+          </div>
+          <div class="field full">
+            <label for="fCategory">Category (optional)</label>
+            <input type="text" id="fCategory" placeholder="e.g. Cameras &amp; Photo">
+          </div>
+          <button type="submit" class="form-submit">Save filter</button>
+          <div class="form-msg" id="newFilterMsg" style="grid-column:1/-1;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- AUTH DRAWER ---------- -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-panel">
+    <div class="auth-panel-head">
+      <div class="eyebrow" style="margin-bottom:0;">MEMBER ACCESS</div>
+      <button class="auth-close" id="authClose" aria-label="Close">&times;</button>
+    </div>
+    <h2>Sign in for alerts</h2>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin">Sign in</button>
+      <button class="auth-tab" id="tabSignup">Create account</button>
+    </div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="form-submit">Sign in</button>
+      <div class="form-msg" id="loginMsg"></div>
+    </form>
+
+    <form id="signupForm" style="display:none;">
+      <div class="field">
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+      </div>
+      <label class="field-checkbox" style="margin-bottom:8px;">
+        <input type="checkbox" id="signupTerms" required>
+        <span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, and understand my phone number — if I add one — will only be used to send the auction alerts I opt into.</span>
+      </label>
+      <button type="submit" class="form-submit">Create account</button>
+      <div class="field-hint">Add a phone number for SMS alerts right after signing up.</div>
+      <div class="form-msg" id="signupMsg"></div>
+    </form>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="brand"><span class="mark"></span>AuctionDealFinder</div>
+      <p>A personal auction-scanning tool that watches live eBay auctions and tells you the moment one is worth a bid.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <ul>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="index.html#dashboard">Live lots</a></li>
+        <li><a href="alerts.html">SMS alerts</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="about.html">About us</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="privacy.html">Privacy policy</a></li>
+        <li><a href="terms.html">Terms &amp; conditions</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="mailto:support@auctiondealfinder.app">support@auctiondealfinder.app</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 AuctionDealFinder. All rights reserved.</div>
+    <div>Data via eBay Browse API</div>
+  </div>
+</footer>
+
+<script>
+/* ===================================================================
+   AuctionDealFinder — shared site behavior
+   Nav account widget, auth drawer (sign in / create account), mobile nav.
+   Loaded on every page. Page-specific logic (deals, filters) lives inline.
+   =================================================================== */
+
+const API_BASE = "https://auction-deal-finder-api.onrender.com";
+
+let authToken = localStorage.getItem('adf_token') || null;
+let currentUser = null;
+
+function authHeaders(json){
+  const h = {};
+  if(json) h['Content-Type'] = 'application/json';
+  if(authToken) h['Authorization'] = `Bearer ${authToken}`;
+  return h;
+}
+
+function setToken(token){
+  authToken = token;
+  if(token) localStorage.setItem('adf_token', token);
+  else localStorage.removeItem('adf_token');
+}
+
+function showFormMsg(el, text, isError){
+  el.textContent = text;
+  el.className = `form-msg show ${isError ? 'error' : 'success'}`;
+}
+function clearFormMsg(el){
+  el.className = 'form-msg';
+  el.textContent = '';
+}
+
+/* ---------- Mobile nav toggle ---------- */
+function initMobileNav(){
+  const toggle = document.getElementById('navToggle');
+  const links = document.getElementById('navLinks');
+  if(!toggle || !links) return;
+  toggle.addEventListener('click', () => links.classList.toggle('open'));
+}
+
+/* ---------- Account widget (nav) ---------- */
+function renderAccountWidget(){
+  const widget = document.getElementById('accountWidget');
+  if(!widget) return;
+  if(currentUser){
+    widget.innerHTML = `
+      <span class="acct-email">${currentUser.email}</span>
+      <button class="btn" id="logoutBtn">Sign out</button>
+    `;
+    document.getElementById('logoutBtn').onclick = logout;
+  }else{
+    widget.innerHTML = `
+      <button class="btn" id="navSignIn">Sign in</button>
+      <button class="btn btn-gold" id="navRegister">Register</button>
+    `;
+    document.getElementById('navSignIn').onclick = () => openAuth('login');
+    document.getElementById('navRegister').onclick = () => openAuth('signup');
+  }
+}
+
+/* ---------- Auth drawer open/close/tabs ---------- */
+function openAuth(tab){
+  const overlay = document.getElementById('authOverlay');
+  if(!overlay) return;
+  overlay.classList.add('open');
+  switchAuthTab(tab || 'login');
+}
+function closeAuth(){
+  const overlay = document.getElementById('authOverlay');
+  if(overlay) overlay.classList.remove('open');
+}
+function switchAuthTab(tab){
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none' : 'block';
+}
+
+/* ---------- Logout ---------- */
+function logout(){
+  setToken(null);
+  currentUser = null;
+  renderAccountWidget();
+  document.dispatchEvent(new CustomEvent('adf:logout'));
+}
+
+/* ---------- Load current user (used on every page to reflect signed-in state) ---------- */
+async function loadCurrentUser(){
+  if(!authToken) return false;
+  try{
+    const res = await fetch(`${API_BASE}/api/auth/me`, { headers: authHeaders() });
+    if(!res.ok){ setToken(null); return false; }
+    currentUser = await res.json();
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+
+/* ---------- Wire up the auth drawer markup + forms (present on every page) ---------- */
+function initAuthDrawer(){
+  const overlay = document.getElementById('authOverlay');
+  if(!overlay) return;
+
+  document.getElementById('authClose').onclick = closeAuth;
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) closeAuth(); });
+  document.getElementById('tabLogin').onclick = () => switchAuthTab('login');
+  document.getElementById('tabSignup').onclick = () => switchAuthTab('signup');
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('loginMsg');
+    clearFormMsg(msg);
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    try{
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST', headers: authHeaders(true),
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if(!res.ok){
+        if(res.status === 429){ showFormMsg(msg, 'Too many attempts — wait a minute and try again.', true); return; }
+        showFormMsg(msg, data.error || 'Sign in failed.', true);
+        return;
+      }
+      setToken(data.access_token);
+      currentUser = data.user;
+      closeAuth();
+      renderAccountWidget();
+      document.dispatchEvent(new CustomEvent('adf:login'));
+    }catch(err){
+      showFormMsg(msg, 'Could not reach the server. Try again shortly.', true);
+    }
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('signupMsg');
+    clearFormMsg(msg);
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const termsAccepted = document.getElementById('signupTerms').checked;
+
+    if(!termsAccepted){
+      showFormMsg(msg, 'Please agree to the Terms & Conditions and Privacy Policy to continue.', true);
+      return;
+    }
+
+    try{
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
+        method: 'POST', headers: authHeaders(true),
+        body: JSON.stringify({ email, password, terms_accepted: termsAccepted })
+      });
+      const data = await res.json();
+      if(!res.ok){
+        if(res.status === 429){ showFormMsg(msg, 'Too many attempts — wait a while and try again.', true); return; }
+        showFormMsg(msg, data.error || 'Could not create account.', true);
+        return;
+      }
+      setToken(data.access_token);
+      currentUser = data.user;
+      closeAuth();
+      renderAccountWidget();
+      document.dispatchEvent(new CustomEvent('adf:login'));
+    }catch(err){
+      showFormMsg(msg, 'Could not reach the server. Try again shortly.', true);
+    }
+  });
+}
+
+/* ---------- Boot sequence every page runs ---------- */
+async function initSite(){
+  initMobileNav();
+  initAuthDrawer();
+  renderAccountWidget();
+  const ok = await loadCurrentUser();
+  if(ok){
+    renderAccountWidget();
+    document.dispatchEvent(new CustomEvent('adf:login'));
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initSite);
+
+</script>
+<script>
+  document.getElementById('signedOutCta').onclick = () => openAuth('login');
+
+  function renderConsentStatus(){
+    const el = document.getElementById('consentStatus');
+    if(currentUser.phone_number && currentUser.sms_consent_given){
+      el.innerHTML = `<div class="consent-status"><span class="dot"></span>SMS alerts on — sending to ${currentUser.phone_number}</div>`;
+    }else{
+      el.innerHTML = `<div class="consent-status off"><span class="dot"></span>SMS alerts are off — add a number below to turn them on</div>`;
+    }
+    document.getElementById('phoneInput').value = currentUser.phone_number || '';
+    document.getElementById('smsConsentCheck').checked = !!currentUser.sms_consent_given;
+  }
+
+  document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('phoneMsg');
+    clearFormMsg(msg);
+    const phone_number = document.getElementById('phoneInput').value.trim();
+    const sms_consent = document.getElementById('smsConsentCheck').checked;
+
+    try{
+      const res = await fetch(`${API_BASE}/api/auth/me/phone`, {
+        method: 'PUT', headers: authHeaders(true),
+        body: JSON.stringify({ phone_number, sms_consent })
+      });
+      const data = await res.json();
+      if(!res.ok){ showFormMsg(msg, data.error || 'Could not save phone number.', true); return; }
+      currentUser = data;
+      renderConsentStatus();
+      showFormMsg(msg, 'Saved — SMS alerts are active for this number.', false);
+    }catch(err){
+      showFormMsg(msg, 'Could not reach the server. Try again shortly.', true);
+    }
+  });
+
+  /* ---------- Filters: list, create, toggle, delete ---------- */
+  function filterCard(f){
+    const crit = [];
+    if(f.keywords) crit.push(`Keywords: ${f.keywords}`);
+    if(f.max_price_inr != null) crit.push(`Under ₹${f.max_price_inr.toLocaleString('en-IN')}`);
+    if(f.min_discount_pct != null) crit.push(`Min ${f.min_discount_pct}% off`);
+    if(f.category) crit.push(`Category: ${f.category}`);
+    return `
+      <div class="filter-card ${f.active ? '' : 'inactive'}" data-id="${f.id}">
+        <div class="filter-info">
+          <div class="filter-name">${f.name}</div>
+          <div class="filter-crit">${crit.length ? crit.map(c => `<span>${c}</span>`).join('') : '<span>No criteria set — matches everything</span>'}</div>
+        </div>
+        <div class="filter-actions">
+          <label class="toggle-switch" title="${f.active ? 'Active' : 'Paused'}">
+            <input type="checkbox" ${f.active ? 'checked' : ''} onchange="toggleFilter(${f.id}, this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+          <button class="danger" onclick="deleteFilter(${f.id})">Delete</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadFilters(){
+    const list = document.getElementById('filterList');
+    const empty = document.getElementById('filtersEmpty');
+    try{
+      const res = await fetch(`${API_BASE}/api/filters`, { headers: authHeaders() });
+      const filters = await res.json();
+      if(!res.ok) throw new Error('Could not load filters');
+
+      document.getElementById('filtersLimit').textContent =
+        filters.length ? `${filters.length} filter${filters.length === 1 ? '' : 's'} saved` : '';
+
+      if(filters.length === 0){
+        list.innerHTML = '';
+        empty.style.display = 'block';
+      }else{
+        empty.style.display = 'none';
+        list.innerHTML = filters.map(filterCard).join('');
+      }
+    }catch(err){
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      empty.textContent = "Couldn't load your filters — try refreshing.";
+    }
+  }
+
+  async function toggleFilter(id, active){
+    try{
+      await fetch(`${API_BASE}/api/filters/${id}`, {
+        method: 'PUT', headers: authHeaders(true),
+        body: JSON.stringify({ active })
+      });
+      loadFilters();
+    }catch(err){ loadFilters(); }
+  }
+
+  async function deleteFilter(id){
+    if(!confirm('Delete this alert filter? This cannot be undone.')) return;
+    try{
+      await fetch(`${API_BASE}/api/filters/${id}`, { method: 'DELETE', headers: authHeaders() });
+      loadFilters();
+    }catch(err){ loadFilters(); }
+  }
+
+  document.getElementById('newFilterForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('newFilterMsg');
+    clearFormMsg(msg);
+
+    const name = document.getElementById('fName').value.trim() || 'My Filter';
+    const keywords = document.getElementById('fKeywords').value.trim();
+    const maxPriceVal = document.getElementById('fMaxPrice').value;
+    const minDiscountVal = document.getElementById('fMinDiscount').value;
+    const category = document.getElementById('fCategory').value.trim();
+
+    const payload = {
+      name,
+      keywords: keywords || null,
+      max_price_inr: maxPriceVal ? Number(maxPriceVal) : null,
+      min_discount_pct: minDiscountVal ? Number(minDiscountVal) : null,
+      category: category || null,
+      active: true
+    };
+
+    try{
+      const res = await fetch(`${API_BASE}/api/filters`, {
+        method: 'POST', headers: authHeaders(true),
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok){ showFormMsg(msg, data.error || 'Could not save filter.', true); return; }
+      e.target.reset();
+      showFormMsg(msg, "Filter saved — you'll get an SMS when a match comes in.", false);
+      loadFilters();
+    }catch(err){
+      showFormMsg(msg, 'Could not reach the server. Try again shortly.', true);
+    }
+  });
+
+  /* ---------- Show the right area based on sign-in state ---------- */
+  function showAlertsArea(){
+    document.getElementById('signedOutCard').style.display = 'none';
+    document.getElementById('signedInArea').style.display = 'block';
+    renderConsentStatus();
+    loadFilters();
+  }
+  function showSignedOut(){
+    document.getElementById('signedInArea').style.display = 'none';
+    document.getElementById('signedOutCard').style.display = 'block';
+  }
+
+  document.addEventListener('adf:login', showAlertsArea);
+  document.addEventListener('adf:logout', showSignedOut);
+
+  // If already signed in by the time common.js finishes its check, reflect it.
+  document.addEventListener('DOMContentLoaded', () => {
+    const check = setInterval(() => {
+      if(currentUser){ showAlertsArea(); clearInterval(check); }
+    }, 50);
+    setTimeout(() => clearInterval(check), 3000);
+  });
+</script>
+
+</body>
+</html>

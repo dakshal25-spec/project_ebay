@@ -21,6 +21,7 @@ def signup():
     password = data.get("password") or ""
     phone_number = (data.get("phone_number") or "").strip()
     sms_consent = data.get("sms_consent", False)
+    terms_accepted = data.get("terms_accepted", False)
 
     if not email or not EMAIL_REGEX.match(email):
         return jsonify({"error": "A valid email is required"}), 400
@@ -30,12 +31,15 @@ def signup():
         return jsonify({"error": "Phone number must be in E.164 format, e.g. +919876543210"}), 400
     if phone_number and not sms_consent:
         return jsonify({"error": "SMS consent is required to store a phone number"}), 400
+    if not terms_accepted:
+        return jsonify({"error": "You must agree to the Terms & Conditions and Privacy Policy to create an account"}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "An account with this email already exists"}), 409
 
     user = User(email=email)
     user.set_password(password)
+    user.accept_terms()
     if phone_number:
         user.set_phone_number(phone_number)
         user.give_sms_consent()

@@ -20,6 +20,11 @@ class User(db.Model):
     sms_consent_given = db.Column(db.Boolean, default=False)
     sms_consent_timestamp = db.Column(db.DateTime, nullable=True)
 
+    # Terms & Conditions / Privacy Policy acceptance — recorded at signup so we
+    # have a proper legal record (not just a frontend-only checkbox).
+    terms_accepted_at = db.Column(db.DateTime, nullable=True)
+    terms_version = db.Column(db.String(20), nullable=True)
+
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, default=True)  # soft-delete / deactivate flag
 
@@ -48,12 +53,21 @@ class User(db.Model):
     def withdraw_sms_consent(self):
         self.sms_consent_given = False
 
+    def accept_terms(self, version="v1"):
+        """Records that the user accepted the Terms & Conditions and Privacy
+        Policy. Called at signup so acceptance is backed by a server-side
+        timestamp, not just a frontend checkbox."""
+        self.terms_accepted_at = datetime.now(timezone.utc)
+        self.terms_version = version
+
     def to_dict(self):
         return {
             "id": self.id,
             "email": self.email,
             "phone_number": self.get_phone_number(),
             "sms_consent_given": self.sms_consent_given,
+            "terms_accepted": self.terms_accepted_at is not None,
+            "terms_accepted_at": self.terms_accepted_at.isoformat() if self.terms_accepted_at else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
