@@ -64,7 +64,9 @@ def send_deal_alert_sms(phone_number: str, listing: dict) -> bool:
     }
 
     try:
-        response = requests.post(FAST2SMS_URL, data=payload, headers=headers, timeout=10)
+       response = requests.post(FAST2SMS_URL, data=payload, headers=headers, timeout=10)
+        if response.status_code != 200:
+            logger.error("Fast2SMS returned %s: %s", response.status_code, response.text)
         response.raise_for_status()
         result = response.json()
 
