@@ -9,3 +9,4 @@ cryptography
 apscheduler
 flask-limiter
 flask-migrate
+psycopg2-binary
