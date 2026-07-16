@@ -9,6 +9,10 @@ class Config:
     # Defaults to a local SQLite file for dev; set DATABASE_URL in .env for Postgres in production
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///auction_deal_finder.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+}
 
     # --- Auth ---
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # must be set in .env, no fallback for security
